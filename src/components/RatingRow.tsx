@@ -10,6 +10,8 @@ interface RatingRowProps {
   rating: number;
   onRate: (rating: number) => void;
   size?: "sm" | "md" | "lg";
+  disabled?: boolean;
+  chainName?: string;
 }
 
 export default function RatingRow({
@@ -19,12 +21,17 @@ export default function RatingRow({
   rating,
   onRate,
   size = "md",
+  disabled = false,
+  chainName,
 }: RatingRowProps) {
   const [hoverRating, setHoverRating] = useState(0);
   const displayRating = hoverRating || rating;
 
   return (
-    <div className="flex gap-1 items-center">
+    <div
+      className="flex gap-1 items-center"
+      style={{ pointerEvents: disabled ? "none" : "auto", opacity: disabled ? 0.6 : 1 }}
+    >
       {Array.from({ length: maxRating }, (_, i) => (
         <ChainRatingIcon
           key={i}
@@ -32,9 +39,10 @@ export default function RatingRow({
           filled={i < displayRating}
           color={color}
           size={size}
-          onClick={() => onRate(i + 1)}
-          onMouseEnter={() => setHoverRating(i + 1)}
+          onClick={() => !disabled && onRate(i + 1)}
+          onMouseEnter={() => !disabled && setHoverRating(i + 1)}
           onMouseLeave={() => setHoverRating(0)}
+          ariaLabel={`Rate ${chainName ?? ""} ${i + 1} out of ${maxRating}`}
         />
       ))}
     </div>

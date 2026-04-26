@@ -1,17 +1,251 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card: #1a1a1a;
-  --card-hover: #222222;
+  --background: #07070b;
+  --background-soft: #0f0f17;
+  --foreground: #f4f4f5;
+  --card: #14141c;
+  --card-strong: #1c1c28;
+  --card-hover: #22222e;
+  --border: #2a2a38;
   --accent: #ff6b35;
   --accent-light: #ff8c5a;
-  --muted: #666666;
+  --accent-glow: rgba(255, 107, 53, 0.35);
+  --muted: #8a8a99;
+  --good: #22c55e;
+  --warn: #f59e0b;
+  --bad: #ef4444;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      1200px 600px at 10% -10%,
+      rgba(255, 107, 53, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 600px at 110% 20%,
+      rgba(120, 80, 220, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      1000px 700px at 50% 110%,
+      rgba(34, 197, 94, 0.12),
+      transparent 60%
+    ),
+    var(--background);
+  background-attachment: fixed;
+}
+
+/* Subtle grain to make the background feel less flat */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px
+  );
+  background-size: 3px 3px;
+  mix-blend-mode: overlay;
+}
+
+main {
+  position: relative;
+  z-index: 1;
+}
+
+/* === Animations === */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px var(--accent-glow));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px var(--accent-glow));
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%)
+      translate(var(--cx, 0), var(--cy, 0)) rotate(var(--cr, 360deg));
+    opacity: 0;
+  }
+}
+
+@keyframes spinSlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--card) 0%,
+    var(--card-hover) 50%,
+    var(--card) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* === Components === */
+.glass {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.01)
+  );
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  border-radius: 18px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--card-strong);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.btn-rate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 180ms ease,
+    opacity 180ms ease;
+  user-select: none;
+  cursor: pointer;
+}
+
+.btn-rate:hover {
+  transform: scale(1.18);
+}
+.btn-rate:active {
+  transform: scale(0.92);
+}
+
+.honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.distribution-bar {
+  background: linear-gradient(
+    90deg,
+    var(--bar-color, var(--accent)) 0%,
+    var(--bar-color, var(--accent-light)) 100%
+  );
+  border-radius: 4px;
+  height: 6px;
+  transition: width 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: confetti 900ms ease-out forwards;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spinSlow 0.7s linear infinite;
+  display: inline-block;
+}
+
+.stat-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
