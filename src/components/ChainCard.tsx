@@ -3,94 +3,175 @@
 import { useState } from "react";
 import type { Chain } from "@/data/chains";
 import RatingRow from "./RatingRow";
+import Confetti from "./Confetti";
+import RatingDistribution from "./RatingDistribution";
+import { useFoodr } from "@/lib/FoodrProvider";
 
 interface ChainCardProps {
   chain: Chain;
 }
 
+const RATING_LABELS = [
+  "Tap to rate",
+  "Not great, even for {name}",
+  "Below average {name}",
+  "Solid {name}",
+  "Great {name}",
+  "Peak {name} experience",
+];
+
 export default function ChainCard({ chain }: ChainCardProps) {
-  const [rating, setRating] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
-  const [reviewCount] = useState(() => Math.floor(Math.random() * 500) + 50);
+  const { stats, yourRatings, submit, ready } = useFoodr();
+  const myRating = yourRatings[chain.id] ?? 0;
+  const chainStats = stats[chain.id];
 
-  const handleRate = (newRating: number) => {
-    setRating(newRating);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 2000);
+  const [hover, setHover] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [justRated, setJustRated] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showStats, setShowStats] = useState(false);
+
+  const ratingForLabel = hover || myRating;
+  const label = RATING_LABELS[ratingForLabel].replace("{name}", chain.name);
+
+  const handleRate = async (newRating: number) => {
+    if (submitting || !ready) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      await submit({ chainId: chain.id, rating: newRating });
+      setJustRated(true);
+      setTimeout(() => setJustRated(false), 1100);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const getRatingLabel = (r: number): string => {
-    if (r === 0) return "Tap to rate";
-    if (r === 1) return "Not great, even for " + chain.name;
-    if (r === 2) return "Below average " + chain.name;
-    if (r === 3) return "Solid " + chain.name;
-    if (r === 4) return "Great " + chain.name;
-    return "Peak " + chain.name + " experience";
-  };
+  const count = chainStats?.count ?? 0;
+  const average = chainStats?.average ?? 0;
+  const distribution = chainStats?.distribution ?? [0, 0, 0, 0, 0];
 
   return (
     <div
-      className="rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] relative overflow-hidden"
+      className="relative rounded-2xl p-5 overflow-hidden transition-all duration-300 hover:-translate-y-0.5 fade-in-up"
       style={{
-        background: `linear-gradient(135deg, var(--card) 0%, ${chain.color}15 100%)`,
-        border: `1px solid ${chain.color}30`,
+        background: `
+          radial-gradient(140% 100% at 0% 0%, ${chain.color}22 0%, transparent 55%),
+          linear-gradient(180deg, var(--card) 0%, var(--card-strong) 100%)
+        `,
+        border: `1px solid ${chain.color}33`,
+        boxShadow: `0 12px 40px -20px ${chain.color}55`,
       }}
     >
-      {submitted && (
-        <div
-          className="absolute inset-0 flex items-center justify-center z-10 rounded-2xl animate-pulse"
-          style={{ background: `${chain.color}20` }}
-        >
-          <span className="text-2xl font-bold" style={{ color: chain.color }}>
-            Rated! {chain.emoji}
-          </span>
-        </div>
-      )}
+      {justRated && <Confetti color={chain.color} />}
+
+      {/* Honeypot — bots filling all visible fields will trip this */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        className="honeypot"
+        aria-hidden="true"
+      />
 
       <div className="flex items-start justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <span className="text-3xl">{chain.emoji}</span>
-            {chain.name}
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <span
+              className="text-3xl"
+              style={{ filter: `drop-shadow(0 0 12px ${chain.color}55)` }}
+            >
+              {chain.emoji}
+            </span>
+            <span className="truncate">{chain.name}</span>
           </h2>
-          <p className="text-sm mt-1" style={{ color: chain.color }}>
-            {chain.tagline}
+          <p
+            className="text-xs mt-0.5 italic truncate"
+            style={{ color: chain.color }}
+          >
+            “{chain.tagline}”
           </p>
         </div>
-        <div className="text-right">
-          <div
-            className="text-xs px-2 py-1 rounded-full"
-            style={{ background: `${chain.color}20`, color: chain.color }}
+        <div className="flex flex-col items-end gap-1">
+          <span
+            className="chip stat-number"
+            style={{
+              background: `${chain.color}20`,
+              borderColor: `${chain.color}55`,
+              color: chain.color,
+            }}
+            title="Average rating on this chain's own scale"
           >
-            {reviewCount} ratings
-          </div>
+            {count > 0 ? average.toFixed(2) : "—"}{" "}
+            <span className="opacity-70">{chain.emoji}</span>
+          </span>
+          <span className="chip stat-number">{count} ratings</span>
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-3 mt-4">
+      <div className="flex flex-col items-center gap-2 mt-2">
         <RatingRow
           emoji={chain.emoji}
           color={chain.color}
-          rating={rating}
+          rating={hover || myRating}
           onRate={handleRate}
           size="lg"
+          disabled={submitting}
+          chainName={chain.name}
         />
-        <p className="text-sm text-[var(--muted)] h-5">
-          {rating > 0 ? (
+        <p
+          className="text-sm text-[var(--muted)] h-5"
+          onMouseLeave={() => setHover(0)}
+        >
+          {submitting ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="spinner" /> Solving challenge…
+            </span>
+          ) : myRating > 0 && !hover ? (
             <>
+              You rated{" "}
               <span className="font-semibold" style={{ color: chain.color }}>
-                {rating}/5
+                {myRating}/5
               </span>{" "}
-              on the {chain.name} scale
+              <span className="opacity-70">on the {chain.name} scale</span>
             </>
           ) : (
-            getRatingLabel(rating)
+            label
           )}
         </p>
-        <p className="text-xs text-[var(--muted)] italic">
-          {getRatingLabel(rating)}
-        </p>
+        {error && (
+          <p className="text-xs text-[var(--bad)] max-w-full truncate">{error}</p>
+        )}
       </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setShowStats((s) => !s)}
+          className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+          aria-expanded={showStats}
+        >
+          {showStats ? "Hide" : "Show"} distribution {showStats ? "▲" : "▼"}
+        </button>
+        {chainStats?.last_rated_at && (
+          <span className="text-[10px] text-[var(--muted)] stat-number">
+            last: {new Date(chainStats.last_rated_at).toLocaleTimeString()}
+          </span>
+        )}
+      </div>
+
+      {showStats && (
+        <div className="mt-3 pt-3 border-t border-[var(--border)] fade-in-up">
+          <RatingDistribution
+            distribution={distribution}
+            color={chain.color}
+            emoji={chain.emoji}
+          />
+        </div>
+      )}
     </div>
   );
 }

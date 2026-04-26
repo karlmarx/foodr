@@ -8,12 +8,13 @@ interface ChainRatingIconProps {
   onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  ariaLabel?: string;
 }
 
 const sizeClasses = {
   sm: "w-6 h-6 text-base",
-  md: "w-10 h-10 text-2xl",
-  lg: "w-14 h-14 text-4xl",
+  md: "w-9 h-9 text-2xl",
+  lg: "w-12 h-12 text-3xl",
 };
 
 export default function ChainRatingIcon({
@@ -24,6 +25,7 @@ export default function ChainRatingIcon({
   onClick,
   onMouseEnter,
   onMouseLeave,
+  ariaLabel,
 }: ChainRatingIconProps) {
   return (
     <button
@@ -31,11 +33,12 @@ export default function ChainRatingIcon({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`${sizeClasses[size]} flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer select-none`}
+      aria-label={ariaLabel}
+      className={`btn-rate ${sizeClasses[size]}`}
       style={{
-        opacity: filled ? 1 : 0.2,
-        transform: filled ? "scale(1.1)" : "scale(0.9)",
-        filter: filled ? `drop-shadow(0 0 8px ${color}40)` : "grayscale(1)",
+        opacity: filled ? 1 : 0.22,
+        transform: filled ? "scale(1.05)" : "scale(0.9)",
+        filter: filled ? `drop-shadow(0 0 10px ${color}66)` : "grayscale(0.95)",
       }}
     >
       {emoji}

@@ -27,3 +27,9 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# rust backend
+/backend/target
+/backend/foodr.db
+/backend/foodr.db-*
+
